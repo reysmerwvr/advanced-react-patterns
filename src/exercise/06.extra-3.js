@@ -5,6 +5,8 @@ import * as React from 'react'
 
 import {Switch} from '../switch'
 import {toggleReducer, actionTypes} from './context/toggle-context'
+import {useControlledSwitchWarning} from './hooks/useControlledSwitchWarning'
+import {useOnChangeReadOnlyWarning} from './hooks/useOnChangeReadOnlyWarning'
 
 const callAll =
   (...fns) =>
@@ -16,12 +18,25 @@ function useToggle({
   reducer = toggleReducer,
   onChange,
   on: controlledOn,
+  readOnly = false,
 } = {}) {
   const {current: initialState} = React.useRef({on: initialOn})
   const [state, dispatch] = React.useReducer(reducer, initialState)
 
   const onIsControlled = controlledOn != null
   const on = onIsControlled ? controlledOn : state.on
+
+  useControlledSwitchWarning(controlledOn, 'on', 'useToggle')
+  useOnChangeReadOnlyWarning(
+    controlledOn,
+    'on',
+    'useToggle',
+    Boolean(onChange),
+    readOnly,
+    'readOnly',
+    'initialOn',
+    'onChange',
+  )
 
   function dispatchWithOnChange(action) {
     if (!onIsControlled) dispatch(action)
@@ -56,12 +71,13 @@ function useToggle({
   }
 }
 
-function Toggle({on: controlledOn, onChange, initialOn, reducer}) {
+function Toggle({on: controlledOn, onChange, initialOn, reducer, readOnly}) {
   const {on, getTogglerProps} = useToggle({
     on: controlledOn,
     onChange,
     initialOn,
     reducer,
+    readOnly,
   })
   const props = getTogglerProps({on})
   return <Switch {...props} />
